@@ -1,0 +1,45 @@
+require('dotenv').config();
+const { Telegraf, Markup } = require('telegraf');
+
+const bot = new Telegraf(process.env.BOT_TOKEN);
+
+console.log('🚀 Запускаем бота...');
+
+bot.start((ctx) => {
+  console.log('✅ Пользователь запустил бота');
+  ctx.reply(
+    `🏋️ Привет, ${ctx.from.first_name}! FitTrackBot запущен!`,
+    Markup.keyboard([
+      ['📊 Начать тренировку'],
+      ['➕ Создать тренировку'],
+      ['ℹ️ Помощь']
+    ]).resize()
+  );
+});
+
+bot.hears('📊 Начать тренировку', (ctx) => {
+  ctx.reply('Выберите тренировку для начала:');
+});
+
+bot.hears('➕ Создать тренировку', (ctx) => {
+  ctx.reply('Введите название для новой тренировки:');
+});
+
+bot.hears('ℹ️ Помощь', (ctx) => {
+  ctx.reply('🤖 FitTrackBot - трекер тренировок\n\nДля начала создайте тренировку или начните существующую!');
+});
+
+bot.on('text', (ctx) => {
+  if (ctx.message.text.startsWith('/')) return;
+  ctx.reply(`Вы сказали: "${ctx.message.text}"`);
+});
+
+bot.launch().then(() => {
+  console.log('🤖 FitTrackBot успешно запущен!');
+}).catch((error) => {
+  console.log('❌ Ошибка запуска бота:', error.message);
+});
+
+// Обработка завершения
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
