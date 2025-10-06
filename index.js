@@ -1,23 +1,31 @@
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
+const express = require('express');
 
 console.log('🚀 Запускаем GymProgress на Railway...');
 
 // Проверяем наличие токена
 if (!process.env.BOT_TOKEN) {
-  console.error('❌ BOT_TOKEN не установлен!');
+  console.error('❌ BOT_TOKEN не установлен! Проверьте переменные окружения в Railway.');
   process.exit(1);
 }
 
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Используем polling для бота
 const bot = new TelegramBot(process.env.BOT_TOKEN, { 
-  polling: true
+  polling: true 
 });
 
-console.log('✅ Бот запущен в режиме polling на Railway');
+console.log('✅ Бот запущен в режиме polling');
 
 // Хранилище данных
 const userData = new Map();
 const activeTimers = new Map();
+
+// [ВСТАВЬТЕ СЮДА ВЕСЬ ВАШ ОРИГИНАЛЬНЫЙ КОД БОТА]
+// Начиная с обработчика /start и до конца
 
 // Обработчик /start
 bot.onText(/\/start/, (msg) => {
@@ -35,30 +43,25 @@ bot.onText(/\/start/, (msg) => {
     });
     
     // Начинаем анкету
-    startQuestionnaire(chatId, userId, userName);
+    bot.sendMessage(chatId,
+      `👋 Привет, ${userName}! Давайте создадим ваш профиль!\n\n` +
+      'Сначала укажите ваш пол:',
+      {
+        reply_markup: {
+          keyboard: [
+            ['👨 Мужской'],
+            ['👩 Женский']
+          ],
+          resize_keyboard: true
+        }
+      }
+    );
     return;
   }
   
   userData.get(userId).state = 'menu';
   showMainMenu(chatId, userName);
 });
-
-// Функция анкетирования
-function startQuestionnaire(chatId, userId, userName) {
-  bot.sendMessage(chatId,
-    `👋 Привет, ${userName}! Давайте создадим ваш профиль!\n\n` +
-    'Сначала укажите ваш пол:',
-    {
-      reply_markup: {
-        keyboard: [
-          ['👨 Мужской'],
-          ['👩 Женский']
-        ],
-        resize_keyboard: true
-      }
-    }
-  );
-}
 
 // Главное меню
 function showMainMenu(chatId, userName, customMessage = null) {
@@ -124,21 +127,18 @@ bot.onText(/👩 Женский/, (msg) => {
   }
 });
 
-// Добавьте сюда остальные обработчики из вашего оригинального кода
-// [ВСТАВЬТЕ ВАШИ ОСТАЛЬНЫЕ ФУНКЦИИ И ОБРАБОТЧИКИ]
+// [ДОБАВЬТЕ СЮДА ВСЕ ОСТАЛЬНЫЕ ФУНКЦИИ И ОБРАБОТЧИКИ ИЗ ВАШЕГО КОДА]
 
-// Простой HTTP сервер для здоровья (требуется Railway)
-const http = require('http');
-const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ 
+// Простой HTTP сервер для Railway
+app.get('/', (req, res) => {
+  res.json({ 
     status: 'Bot is running on Railway!', 
+    users: userData.size,
     timestamp: new Date().toISOString()
-  }));
+  });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ HTTP сервер запущен на порту ${PORT}`);
 });
 
